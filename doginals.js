@@ -218,20 +218,17 @@ async function mint() {
     if (!wallet.sendAddress) {
         throw new Error('Missing send address');
     }
-    const argContentTypeOrFilename = process.argv[3]
-    const argHexData = process.argv[4]
+    const filepath = process.argv[3]
+    const customAddress = process.argv[4]
+    const sendAddress = customAddress || wallet.sendAddress;
 
-    let address = new Address(wallet.sendAddress)
+    let address = new Address(sendAddress)
     let contentType
     let data
 
-    if (fs.existsSync(argContentTypeOrFilename)) {
+    if (fs.existsSync(filepath)) {
         contentType = mime.contentType(mime.lookup(argContentTypeOrFilename))
         data = fs.readFileSync(argContentTypeOrFilename)
-    } else {
-        contentType = argContentTypeOrFilename
-        if (!/^[a-fA-F0-9]*$/.test(argHexData)) throw new Error('data must be hex')
-        data = Buffer.from(argHexData, 'hex')
     }
 
     if (data.length == 0) {
@@ -245,12 +242,11 @@ async function mint() {
     let txs = inscribe(wallet, address, contentType, data)
 
     for (let i = 0; i < txs.length; i++) {
-        // console.log(`broadcasting tx ${i + 1} of ${txs.length}`)
-
         await broadcast(txs[i])
     }
     const result = {
-        inscription: txs[1].hash
+        inscription: txs[1].hash,
+        sendAddress
     }
     console.log(result);
 }
