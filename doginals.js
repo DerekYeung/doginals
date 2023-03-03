@@ -216,6 +216,7 @@ async function walletSplit() {
 const MAX_SCRIPT_ELEMENT_SIZE = 520
 
 async function mint() {
+    await walletSync();
     let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
     if (!wallet.sendAddress) {
         throw new Error('Missing send address');
@@ -582,7 +583,7 @@ function server() {
 
 main().catch(e => {
     shutdown();
-    throw e;
+    throw e.message;
 }).finally(() => {
     shutdown();
 })
