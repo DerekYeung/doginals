@@ -250,7 +250,7 @@ async function mint() {
         inscription: `${txs[1].hash}i0`,
         reveal: txs[1].hash,
         sendAddress,
-        sendHash: txs[1].hash
+        sendHash: txs[txs.length - 1].hash
     }
     console.log(JSON.stringify(result));
 }
