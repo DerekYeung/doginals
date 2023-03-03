@@ -6,8 +6,41 @@ const fs = require('fs')
 const dotenv = require('dotenv')
 const mime = require('mime-types')
 const express = require('express')
-const { PrivateKey, Address, Transaction, Script, Opcode } = dogecore
+const { PrivateKey, Address, Transaction, Script, Opcode, HDPrivateKey } = dogecore
 const { Hash, Signature } = dogecore.crypto
+const {
+    generateMnemonic: _generateMnemonic,
+    mnemonicToSeed,
+} = require('@scure/bip39');
+const {
+    wordlist,
+} = require('@scure/bip39/wordlists/english');
+
+function generateMnemonic(entropy = 256) {
+    if (entropy !== 256 && entropy !== 128) {
+        throw TypeError(
+            `Incorrect entropy bits provided, expected 256 or 128 (24 or 12 word results), got: "${String(
+        entropy
+      )}".`
+        );
+    }
+    return _generateMnemonic(wordlist, entropy);
+}
+
+
+if (fs.existsSync('.lock')) {
+    throw new Error('lock!');
+}
+fs.writeFileSync('.lock', 'locking');
+const shutdown = () => {
+    try {
+        fs.unlinkSync('.lock');
+    } catch (e) {
+
+    }
+}
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
 
 dotenv.config()
 
@@ -58,12 +91,27 @@ async function wallet() {
 }
 
 
-function walletNew() {
+async function walletNew() {
+
     if (!fs.existsSync(WALLET_PATH)) {
-        const privateKey = new PrivateKey()
-        const privkey = privateKey.toWIF()
-        const address = privateKey.toAddress().toString()
-        const json = { privkey, address, utxos: [] }
+        const hdPrivKey = new HDPrivateKey();
+        const hotWallet = hdPrivKey.deriveChild("m/44'/236'/0'/0/0");
+        const sendWallet = hdPrivKey.deriveChild("m/44'/236'/0'/1/0");
+        const xprivkey = hdPrivKey.xprivkey;
+
+        const privkey = hotWallet.privateKey.toWIF();
+        const address = hotWallet.privateKey.toAddress().toString();
+        const sendKey = sendWallet.privateKey.toWIF();
+        const sendAddress = sendWallet.privateKey.toAddress().toString();
+
+        const json = {
+            xprivkey,
+            privkey,
+            address,
+            sendKey,
+            sendAddress,
+            utxos: []
+        }
         fs.writeFileSync(WALLET_PATH, JSON.stringify(json, 0, 2))
         console.log('address', address)
     } else {
@@ -75,21 +123,24 @@ function walletNew() {
 async function walletSync() {
     if (process.env.TESTNET == 'true') throw new Error('no testnet api')
 
-    let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
+    let wallet = JSON.parse(fs.readFileSync('.wallet.json'))
 
-    console.log('syncing utxos with dogechain.info api')
-
-    let response = await axios.get(`https://dogechain.info/api/v1/address/unspent/${wallet.address}`)
-    wallet.utxos = response.data.unspent_outputs.map(output => {
+    let response = await axios.get(`${process.env.NODE_API_URL}/address/${wallet.address}/unspent`)
+    const script = dogecore.Script.fromAddress(wallet.address).toHex();
+    utxos = response.data.data.map(output => {
         return {
             txid: output.tx_hash,
-            vout: output.tx_output_n,
-            script: output.script,
+            vout: output.tx_pos,
+            script,
             satoshis: output.value
         }
     })
+    utxos.sort((a, b) => {
+        return b.satoshis - a.satoshis;
+    })
+    wallet.utxos = utxos || [];
 
-    fs.writeFileSync(WALLET_PATH, JSON.stringify(wallet, 0, 2))
+    fs.writeFileSync('.wallet.json', JSON.stringify(wallet, 0, 2))
 
     let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
 
@@ -135,17 +186,21 @@ async function walletSend() {
 
 
 async function walletSplit() {
-    let splits = parseInt(process.argv[4])
+    let splits = parseInt(process.argv[4] || 100);
 
-    let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
+    let wallet = JSON.parse(fs.readFileSync(WALLET_PATH));
+    const unit = parseInt(process.argv[5] || 50000000);
+    const utxos = (wallet.utxos || []).filter(node => {
+        return node.satoshis >= (unit * 2);
+    });
 
-    let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
+    let balance = utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
     if (balance == 0) throw new Error('no funds to split')
 
     let tx = new Transaction()
-    tx.from(wallet.utxos)
+    tx.from(utxos)
     for (let i = 0; i < splits - 1; i++) {
-        tx.to(wallet.address, Math.floor(balance / splits))
+        tx.to(wallet.address, unit);
     }
     tx.change(wallet.address)
     tx.sign(wallet.privkey)
@@ -515,6 +570,8 @@ function server() {
 
 
 main().catch(e => {
-    let reason = e.response && e.response.data && e.response.data.error && e.response.data.error.message
-    console.error(reason ? e.message + ':' + reason : e.message)
+    shutdown();
+    throw e;
+}).finally(() => {
+    shutdown();
 })
