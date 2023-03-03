@@ -58,11 +58,11 @@ if (process.env.TESTNET == 'true') {
     dogecore.Networks.defaultNetwork = dogecore.Networks.testnet
 }
 
-if (process.env.FEE_PER_KB) {
-    Transaction.FEE_PER_KB = parseInt(process.env.FEE_PER_KB)
-} else {
+// if (process.env.FEE_PER_KB) {
+//     Transaction.FEE_PER_KB = parseInt(process.env.FEE_PER_KB)
+// } else {
+// }
     Transaction.FEE_PER_KB = 100000000
-}
 
 const WALLET_PATH = process.env.WALLET || '.wallet.json'
 
