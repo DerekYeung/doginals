@@ -222,14 +222,18 @@ async function walletSplit() {
 
     let tx = new Transaction()
     tx.from(utxos)
-    for (let i = 0; i < splits - 1; i++) {
+    for (let i = 0; i < splits; i++) {
+        console.log('add output');
         tx.to(wallet.address, unit);
     }
     tx.change(address)
     tx.sign(pk)
+    console.log(tx.getFee());
+    // console.log(tx.outputs);
+    // console.log(tx.toString('hex'));
 
-    await broadcast(tx)
-    console.log(tx.hash)
+    // await broadcast(tx)
+    // console.log(tx.hash)
 
     // await new Promise(resolve => {
     //     setTimeout(() => {
