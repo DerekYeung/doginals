@@ -120,7 +120,7 @@ async function walletNew() {
 }
 
 
-async function walletSync() {
+async function walletSync(out = true) {
     if (process.env.TESTNET == 'true') throw new Error('no testnet api')
 
     let wallet = JSON.parse(fs.readFileSync('.wallet.json'))
@@ -141,11 +141,12 @@ async function walletSync() {
     wallet.utxos = utxos || [];
 
     fs.writeFileSync('.wallet.json', JSON.stringify(wallet, 0, 2))
-
-    let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
-    console.log(JSON.stringify({
-        balance
-    }));
+    if (out) {
+        let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
+        console.log(JSON.stringify({
+            balance
+        }));
+    }
 }
 
 
@@ -253,6 +254,15 @@ async function mint() {
         sendHash: txs[txs.length - 1].hash
     }
     console.log(JSON.stringify(result));
+    try {
+        await new Promise(resolve => {
+            setTimeout(() => {
+                resolve(true)
+            }, 3000);
+        });
+        await walletSync(false);
+    } catch (e) {
+    }
 }
 
 
