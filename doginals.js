@@ -245,7 +245,7 @@ async function mint() {
         await broadcast(txs[i])
     }
     const result = {
-        inscription: txs[1].hash,
+        inscription: `${txs[1].hash}i0`,
         sendAddress
     }
     console.log(result);
