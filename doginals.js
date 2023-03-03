@@ -408,6 +408,7 @@ function inscribe(wallet, address, contentType, data) {
     tx.addInput(p2shInput)
     tx.to(address, 100000)
     fund(wallet, tx)
+    tx.change(wallet.address)
 
     let signature = Transaction.sighash.sign(tx, privateKey, Signature.SIGHASH_ALL, 0, lastLock)
     let txsignature = Buffer.concat([signature.toBuffer(), Buffer.from([Signature.SIGHASH_ALL])])
