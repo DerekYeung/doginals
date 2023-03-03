@@ -227,8 +227,8 @@ async function mint() {
     let data
 
     if (fs.existsSync(filepath)) {
-        contentType = mime.contentType(mime.lookup(argContentTypeOrFilename))
-        data = fs.readFileSync(argContentTypeOrFilename)
+        contentType = mime.contentType(mime.lookup(filepath))
+        data = fs.readFileSync(filepath)
     }
 
     if (data.length == 0) {
