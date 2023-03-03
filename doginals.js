@@ -214,10 +214,12 @@ async function walletSplit() {
 const MAX_SCRIPT_ELEMENT_SIZE = 520
 
 async function mint() {
-    const argAddress = process.argv[3]
-    const argContentTypeOrFilename = process.argv[4]
-    const argHexData = process.argv[5]
-
+    let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
+    if (!wallet.sendAddress) {
+        throw new Error('Missing send address');
+    }
+    const argContentTypeOrFilename = process.argv[3]
+    const argHexData = process.argv[4]
 
     let address = new Address(argAddress)
     let contentType
@@ -240,18 +242,17 @@ async function mint() {
         throw new Error('content type too long')
     }
 
-
-    let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
-
     let txs = inscribe(wallet, address, contentType, data)
 
     for (let i = 0; i < txs.length; i++) {
-        console.log(`broadcasting tx ${i + 1} of ${txs.length}`)
+        // console.log(`broadcasting tx ${i + 1} of ${txs.length}`)
 
         await broadcast(txs[i])
     }
-
-    console.log('inscription txid:', txs[1].hash)
+    const result = {
+        inscription: txs[1].hash
+    }
+    console.log(result);
 }
 
 
