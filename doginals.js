@@ -129,7 +129,10 @@ async function walletSync(out = true) {
 
     let response = await axios.get(`${process.env.NODE_API_URL}/address/${wallet.address}/unspent`)
     const script = dogecore.Script.fromAddress(wallet.address).toHex();
-    utxos = response.data.data.map(output => {
+    const unspent = (response.data.data || []).filter(node => {
+        return node.height > 0;
+    });
+    const utxos = unspent.map(output => {
         return {
             txid: output.tx_hash,
             vout: output.tx_pos,
