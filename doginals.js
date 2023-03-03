@@ -221,7 +221,7 @@ async function mint() {
     const argContentTypeOrFilename = process.argv[3]
     const argHexData = process.argv[4]
 
-    let address = new Address(argAddress)
+    let address = new Address(wallet.sendAddress)
     let contentType
     let data
 
