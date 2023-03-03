@@ -29,7 +29,7 @@ function generateMnemonic(entropy = 256) {
 
 
 if (fs.existsSync('.lock')) {
-    throw new Error('lock!');
+    throw new Error('Cannot acquire lock.');
 }
 fs.writeFileSync('.lock', 'locking');
 const shutdown = () => {
