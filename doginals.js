@@ -189,7 +189,7 @@ async function walletSplit() {
     let splits = parseInt(process.argv[4] || 100);
 
     let wallet = JSON.parse(fs.readFileSync(WALLET_PATH));
-    const unit = parseInt(process.argv[5] || 50000000);
+    const unit = parseInt(process.argv[5] || 100000000);
     const utxos = (wallet.utxos || []).filter(node => {
         return node.satoshis >= (unit * 2);
     });
