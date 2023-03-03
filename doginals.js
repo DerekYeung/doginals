@@ -143,8 +143,9 @@ async function walletSync() {
     fs.writeFileSync('.wallet.json', JSON.stringify(wallet, 0, 2))
 
     let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
-
-    console.log('balance', balance)
+    console.log(JSON.stringify({
+        balance
+    }));
 }
 
 
@@ -248,9 +249,10 @@ async function mint() {
         commit: txs[0].hash,
         inscription: `${txs[1].hash}i0`,
         reveal: txs[1].hash,
-        sendAddress
+        sendAddress,
+        sendHash: txs[1].hash
     }
-    console.log(result);
+    console.log(JSON.stringify(result));
 }
 
 
