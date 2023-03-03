@@ -81,6 +81,8 @@ async function wallet() {
         await walletSync()
     } else if (subcmd == 'balance') {
         walletBalance()
+    } else if (subcmd == 'count') {
+        walletCount()
     } else if (subcmd == 'send') {
         await walletSend()
     } else if (subcmd == 'split') {
@@ -156,6 +158,11 @@ function walletBalance() {
     let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
 
     console.log(wallet.address, balance)
+}
+
+function walletCount() {
+    let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
+    console.log(wallet.address, wallet.utxos.length)
 }
 
 
