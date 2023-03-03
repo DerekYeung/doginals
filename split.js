@@ -196,11 +196,24 @@ async function walletSend() {
 
 
 async function walletSplit() {
-    let splits = parseInt(process.argv[4] || 100);
+    const pk = PrivateKey.fromWIF(process.env.SPLIT_KEY);
+    const address = pk.toAddress().toString();
+
+    const response = await axios.get(`${process.env.NODE_API_URL}/address/${address}/unspent`)
+    const script = dogecore.Script.fromAddress(address).toHex();
+    const unspent = response.data.data.map(output => {
+        return {
+            txid: output.tx_hash,
+            vout: output.tx_pos,
+            script,
+            satoshis: output.value
+        }
+    })
+    let splits = parseInt(process.argv[2] || 100);
 
     let wallet = JSON.parse(fs.readFileSync(WALLET_PATH));
     const unit = parseInt(process.argv[5] || 100000000);
-    const utxos = (wallet.utxos || []).filter(node => {
+    const utxos = (unspent || []).filter(node => {
         return node.satoshis >= (unit * 2);
     });
 
@@ -212,18 +225,18 @@ async function walletSplit() {
     for (let i = 0; i < splits - 1; i++) {
         tx.to(wallet.address, unit);
     }
-    tx.change(wallet.address)
-    tx.sign(wallet.privkey)
+    tx.change(address)
+    tx.sign(pk)
 
     await broadcast(tx)
     console.log(tx.hash)
 
-    await new Promise(resolve => {
-        setTimeout(() => {
-            resolve(true);
-        }, 3000);
-    })
-    await walletSync();
+    // await new Promise(resolve => {
+    //     setTimeout(() => {
+    //         resolve(true);
+    //     }, 3000);
+    // })
+    // await walletSync();
 }
 
 
