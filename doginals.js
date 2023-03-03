@@ -591,7 +591,8 @@ function server() {
 
 main().catch(e => {
     shutdown();
-    throw e.message;
+    let reason = e.response && e.response.data && e.response.data.error && e.response.data.error.message
+    throw reason;
 }).finally(() => {
     shutdown();
 })
