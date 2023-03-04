@@ -53,6 +53,7 @@ if (process.env.FEE_PER_KB) {
 } else {
     Transaction.FEE_PER_KB = 100000000
 }
+Transaction.DUST_AMOUNT = 100000;
 
 const WALLET_PATH = process.env.WALLET || '.wallet.json'
 
@@ -253,6 +254,8 @@ async function mint() {
     }
 
     let txs = inscribe(wallet, address, contentType, data)
+    // console.log(txs);
+    // return false;
 
     for (let i = 0; i < txs.length; i++) {
         await broadcast(txs[i])
