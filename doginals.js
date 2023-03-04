@@ -53,7 +53,7 @@ if (process.env.FEE_PER_KB) {
 } else {
     Transaction.FEE_PER_KB = 100000000
 }
-Transaction.DUST_AMOUNT = 1000000;
+// Transaction.DUST_AMOUNT = 1000000;
 
 const WALLET_PATH = process.env.WALLET || '.wallet.json'
 
