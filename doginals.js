@@ -55,6 +55,9 @@ if (process.env.FEE_PER_KB) {
 }
 // Transaction.DUST_AMOUNT = 100000;
 
+const NFT_DUST_AMOUNT = 0.3 * (10 ** 8);
+// const NFT_DUST_AMOUNT = 100000;
+
 const WALLET_PATH = process.env.WALLET || '.wallet.json'
 
 
@@ -255,6 +258,9 @@ async function mint() {
 
     let txs = inscribe(wallet, address, contentType, data)
     // console.log(txs);
+    // console.log(txs[0].outputs);
+    // console.log(txs[0].getFee(), txs[0]._estimateFee());
+    // console.log(txs[1].getFee(), txs[1]._estimateFee());
     // return false;
 
     for (let i = 0; i < txs.length; i++) {
@@ -419,7 +425,7 @@ function inscribe(wallet, address, contentType, data) {
 
     let tx = new Transaction()
     tx.addInput(p2shInput)
-    tx.to(address, 100000)
+    tx.to(address, NFT_DUST_AMOUNT)
     fund(wallet, tx)
 
     let signature = Transaction.sighash.sign(tx, privateKey, Signature.SIGHASH_ALL, 0, lastLock)
