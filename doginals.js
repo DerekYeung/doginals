@@ -125,8 +125,33 @@ async function walletNew() {
     }
 }
 
-
 async function walletSync(out = true) {
+    if (process.env.TESTNET == 'true') throw new Error('no testnet api')
+
+    let wallet = JSON.parse(fs.readFileSync(WALLET_PATH))
+
+    console.log('syncing utxos with dogechain.info api')
+
+    let response = await axios.get(`https://dogechain.info/api/v1/address/unspent/${wallet.address}`)
+    wallet.utxos = response.data.unspent_outputs.map(output => {
+        return {
+            txid: output.tx_hash,
+            vout: output.tx_output_n,
+            script: output.script,
+            satoshis: output.value
+        }
+    })
+
+    fs.writeFileSync(WALLET_PATH, JSON.stringify(wallet, 0, 2))
+    if (out) {
+        let balance = wallet.utxos.reduce((acc, curr) => acc + curr.satoshis, 0)
+        console.log(JSON.stringify({
+            balance
+        }));
+    }
+}
+
+async function walletSync2(out = true) {
     if (process.env.TESTNET == 'true') throw new Error('no testnet api')
 
     let wallet = JSON.parse(fs.readFileSync('.wallet.json'))
